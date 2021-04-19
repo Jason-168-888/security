@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<title>托克投资 &mdash; 股票交易</title>
+	<meta name="viewport" content="width=device-width" />
+	<!--[if lt IE 9]><script src="./assets/html5.js"></script><![endif]-->
+	
+	<meta name="robots" content="index,follow" />
+	<link rel="stylesheet" href="./assets/bootstrap/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="./assets/dist/themes/default/style.min.css" />
+	<link rel="stylesheet" href="./assets/docs.css" />
+	<!--[if lt IE 9]><script src="./assets/respond.js"></script><![endif]-->
+
+	<link rel="icon" href="./assets/favicon.ico" type="image/x-icon" />
+	<link rel="apple-touch-icon-precomposed" href="./assets/apple-touch-icon-precomposed.png" />
+	<script>window.$q=[];window.$=window.jQuery=function(a){window.$q.push(a);};</script>
+</head>
+
+<body>
+
+	<header id="head">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-3 col-sm-12">
+					<h1 id="logo"><a href=""></a></h1>
+				</div>
+				<div class="col-md-6 col-sm-8">
+					<nav>
+						<ul class="nav nav-pills" id="menu">
+							<li><a href="/docs"><i class="glyphicon glyphicon-home"></i> 首页</a></li>
+							<li><a href=""><i class="glyphicon glyphicon-flash"></i> 我的股票</a></li>
+							<li><a href=""><i class="glyphicon glyphicon-user"></i> 股票服务</a></li>
+							<li><a href=""><i class="glyphicon glyphicon-link"></i> 关于托克</a></li>
+						</ul>
+					</nav>
+				</div>
+				<div class="col-md-3 col-sm-4">
+					<form>
+						<input type="text" id="srch" class="form-control" placeholder="股票搜索" />
+					</form>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	<div class="container" id="content">
+		<div class="row page" id="docs">
+			<div class="col-md-12" style="">
+				<h3><i class="glyphicon glyphicon-leaf"></i> 托克投资 -- 股票交易头寸</h3>
+				<div class="row"><br>
+
+						<div align="center">
+							<p style="font-size: 24px; color: forestgreen">载入MYSQL交易记录</p><br>
+							<table width="800px;" border="2" style="text-align:center;">
+								<thead>
+								<tr>
+									<th style="text-align:center;">TransactionID</th>
+									<th style="text-align:center;">TradeID</th>
+									<th style="text-align:center;">Version</th>
+									<th style="text-align:center;">SecurityCode</th>
+									<th style="text-align:center;">Quantity</th>
+									<th style="text-align:center;">Insert/Update/Cancel</th>
+									<th style="text-align:center;">Buy/Sell</th>
+								</tr>
+								</thead>
+								<tbody id="tansactionTable"></tbody>
+							</table>
+
+							<br><br><br>
+
+							<p style="font-size: 24px; color: red">输出股票头寸</p><br>
+							<table width="400px;" border="2" style="text-align:center;">
+								<thead>
+								<tr>
+									<th style="text-align:center;">SecurityCode</th>
+									<th style="text-align:center;">Quantity</th>
+								</tr>
+								</thead>
+								<tbody id="resultTable"></tbody>
+							</table>
+						</div>
+
+						<br><br><br><br>
+						<div align="center">
+								<img src="./assets/images/browsers.png" style="max-width:100%; max-height:36px;" alt="" /><br />
+								<small>支持目前主流浏览器，推荐Google访问<br />
+								Copyright &copy;2020~2025 蒋武个人用于Java全栈开发演示</small><br><br><br>
+						</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<a href=""><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_green_007200.png"></a>
+	<script src="./assets/jquery-1.10.2.min.js"></script>
+	<script src="./assets/jquery.address-1.6.js"></script>
+	<script src="./assets/vakata.js"></script>
+	<script src="./assets/dist/jstree.min.js"></script>
+	<script src="./assets/docs.js"></script>
+	<script>$.each($q,function(i,f){$(f)});$q=null;</script>
+</body>
+
+<script>
+    // 定义全局交易记录数组
+    var g_TransactionList = [];
+
+    // 定义全局股票头寸结果记录数组
+    var g_ResultList = [];
+
+    $(document).ready(function() {
+        $.ajax({
+            type: "GET",
+            url: "http://localhost/transaction/load",
+            xhrFields:{
+                withCredentials:true,
+            },
+            success: function(data) {
+                if (data.status == "success") {
+                    g_TransactionList = data.data;
+                    reloadTransactionDom();
+
+                    $.ajax({
+                        type: "POST",
+                        url: "http://localhost/transaction/execute",
+                        xhrFields:{
+                            withCredentials:true,
+                        },
+                        success: function(data) {
+                            if (data.status == "success") {
+                                g_ResultList = data.data;
+                                reloadResultDom();
+                            } else {
+                                alert("处理交易失败！" +'\n' + '\n' + "错误代码：" + data.data.errCode + '\n' + "错误信息：" + data.data.errMsg);
+                            }
+                        },
+                        error: function(data) {
+                            alert("处理交易失败！" +'\n' + '\n' + "错误提示：" + data.responseText);
+                        }
+                    });
+                } else {
+                    alert("数据库载入交易记录失败！" +'\n' + '\n' + "错误代码：" + data.data.errCode + '\n' + "错误信息：" + data.data.errMsg);
+                }
+            },
+            error: function(data) {
+                alert("获取交易记录失败！" +'\n' + '\n' + "错误提示：" + data.responseText);
+            }
+        });
+    });
+
+    function reloadTransactionDom() {
+        for (var i = 0; i < g_TransactionList.length; i++) {
+            var transactionVO =g_TransactionList[i];
+            var dom =
+                "<tr data-id='"+transactionVO.id + "' id='itemDetail"+transactionVO.id+"'>\
+			<td width='20%'>"+transactionVO.id+"</td>\
+			<td width='10%'>"+transactionVO.tradeId+"</td>\
+			<td width='10%'>"+transactionVO.version+"</td>\
+			<td width='15%'>"+transactionVO.securityCode+"</td>\
+			<td width='10%'>"+transactionVO.quantity+"</td>\
+			<td width='25%'>"+transactionVO.action+"</td>\
+			<td width='10%'>"+transactionVO.tradeDirection+"</td>\
+			</tr>";
+            $("#tansactionTable").append($(dom));
+        }
+    }
+
+    function reloadResultDom() {
+        for (var i = 0; i < g_ResultList.length; i++) {
+            var resultVO =g_ResultList[i];
+            var dom =
+                "<tr data-id='"+resultVO.id + "' id='itemDetail"+resultVO.id+"'>\
+			<td width='50%'>"+resultVO.securityCode+"</td>\
+			<td width='50%'>"+resultVO.quantity+"</td>\
+			</tr>";
+            $("#resultTable").append($(dom));
+        }
+    }
+</script>
+</html>
